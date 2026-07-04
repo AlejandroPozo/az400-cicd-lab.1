@@ -1,0 +1,117 @@
+:root {
+  --bg: #f3f6fb;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #4b5563;
+  --primary: #0f4c81;
+  --accent: #0b9f8a;
+  --border: #d9e2ec;
+  --shadow: 0 14px 30px rgba(15, 76, 129, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(11, 159, 138, 0.1), transparent 30%),
+    radial-gradient(circle at 90% 0%, rgba(15, 76, 129, 0.12), transparent 35%),
+    var(--bg);
+  line-height: 1.6;
+}
+
+.site-header {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 1.5rem;
+}
+
+.site-header h1 {
+  margin: 0 0 0.5rem;
+  color: var(--primary);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+}
+
+.site-header p {
+  margin: 0;
+  max-width: 75ch;
+  color: var(--muted);
+}
+
+.grid-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem 2.5rem;
+}
+
+.grid-section h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.student-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.student-icon {
+  font-size: 1.6rem;
+  display: inline-block;
+  margin-bottom: 0.4rem;
+}
+
+.student-number {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.student-title {
+  margin: 0.4rem 0;
+  font-size: 1.1rem;
+}
+
+.student-description {
+  margin: 0;
+  color: var(--muted);
+}
+
+.student-author {
+  margin: 0.9rem 0 0;
+  font-weight: 600;
+}
+
+.pending {
+  border-left: 5px solid var(--accent);
+}
+
+.error-message {
+  margin: 0;
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    padding-top: 2rem;
+  }
+
+  .student-card {
+    padding: 0.95rem;
+  }
+}
