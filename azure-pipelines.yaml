@@ -1,0 +1,156 @@
+trigger:
+  batch: "true"
+  branches:
+    include:
+      - main
+
+pr:
+  autoCancel: "true"
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  artifactName: sitio-web
+  webAppName: web-az400-cicd-ap-20260619
+
+stages:
+
+- stage: CI
+  displayName: Integración continua
+
+  jobs:
+  - job: ValidateAndPackage
+    displayName: Validar y empaquetar
+
+    steps:
+    - checkout: self
+      clean: "true"
+
+    - task: Bash@3
+      displayName: Validar estructura del sitio
+      inputs:
+        targetType: inline
+        script: |
+          set -euo pipefail
+
+          required_files=(
+            "index.html"
+            "css/styles.css"
+            "js/app.js"
+            "components/student-01.html"
+            "components/student-02.html"
+            "components/student-03.html"
+            "components/student-04.html"
+            "components/student-05.html"
+            "components/student-06.html"
+            "components/student-07.html"
+          )
+
+          echo "Verificando archivos obligatorios..."
+
+          for file in "${required_files[@]}"; do
+            if [ ! -s "$file" ]; then
+              echo "ERROR: No existe o está vacío: $file"
+              exit 1
+            fi
+
+            echo "Correcto: $file"
+          done
+
+          echo "Verificando index.html..."
+
+          grep -qi "css/styles.css" index.html || {
+            echo "ERROR: index.html no carga styles.css"
+            exit 1
+          }
+
+          grep -qi "js/app.js" index.html || {
+            echo "ERROR: index.html no carga app.js"
+            exit 1
+          }
+
+          echo "Verificando componentes..."
+
+          for file in components/student-*.html; do
+            grep -qi "<article" "$file" || {
+              echo "ERROR: $file no contiene <article>"
+              exit 1
+            }
+
+            grep -qi "</article>" "$file" || {
+              echo "ERROR: $file no contiene </article>"
+              exit 1
+            }
+
+            grep -qi "<h2" "$file" || {
+              echo "ERROR: $file no contiene un título <h2>"
+              exit 1
+            }
+
+            echo "Componente correcto: $file"
+          done
+
+          echo "Validación completada correctamente."
+
+    - task: CopyFiles@2
+      displayName: Preparar archivos del sitio
+      inputs:
+        SourceFolder: $(Build.SourcesDirectory)
+        Contents: |
+          index.html
+          css/**
+          js/**
+          components/**
+        TargetFolder: $(Build.ArtifactStagingDirectory)/site
+
+    - task: ArchiveFiles@2
+      displayName: Crear paquete ZIP
+      inputs:
+        rootFolderOrFile: $(Build.ArtifactStagingDirectory)/site
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/sitio-web.zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/sitio-web.zip
+      displayName: Publicar artefacto
+      artifact: $(artifactName)
+
+- stage: CD
+  displayName: Entrega continua
+  dependsOn: CI
+
+  condition: |
+    and(
+      succeeded(),
+      eq(
+        variables['Build.SourceBranch'],
+        'refs/heads/main'
+      )
+    )
+
+  jobs:
+  - deployment: DeployStaticSite
+    displayName: Desplegar sitio
+
+    environment: lab
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: $(artifactName) 
+            
+
+          - task: AzureWebApp@1
+            displayName: Publicar en Azure Web App
+            inputs:
+              azureSubscription: sc-az400-cicd-lab
+              appType: webAppLinux
+              appName: $(webAppName)
+              package: $(Pipeline.Workspace)/$(artifactName)/sitio-web.zip
